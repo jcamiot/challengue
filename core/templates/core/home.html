@@ -1,0 +1,294 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Portada{% endblock %}
+
+{% block background %}{% load static %}{% static 'core/img/home-bg.jpg' %}{% endblock %}
+
+{% block headers %}
+<h1>Dashboard</h1>
+<span class="subheading">HR Employee Attrition</span>
+{% endblock %}
+
+
+{% block content %}
+<div class="row"> 
+    <div class="col-md-3 text-center">
+        <div class="card text-dark bg-light mb-3" style="max-width: 18rem;">
+            <div class="card-header">Age Avg.</div>
+            <div class="card-body">
+                <h5 class="card-title"><span id="age_avg">{{age_avg|floatformat:1 }}</span></h5>                
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 text-center">
+        <div class="card text-dark bg-light mb-3" style="max-width: 18rem;">
+            <div class="card-header">Hourly Rate Avg</div>
+            <div class="card-body">
+                <h5 class="card-title"><span id="hourly_rate_avg">${{hourly_rate_avg|floatformat:2 }}</span></h5>                
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 text-center">
+        <div class="card text-dark bg-light mb-3" style="max-width: 18rem;">
+            <div class="card-header">Monthly Income Avg</div>
+            <div class="card-body">
+                <h5 class="card-title"><span id="monthly_income_avg">${{monthly_income_avg|floatformat:2 }}</span></h5>                
+            </div>
+        </div>
+    </div>    
+    <div class="col-md-3 text-center">
+        <div class="card text-dark bg-light mb-3" style="max-width: 18rem;">
+            <div class="card-header">Total of Employees</div>
+            <div class="card-body">
+                <h5 class="card-title"><span id="total_employees"></span></h5>                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row"> 
+    <div class="col-lg-8 col-md-10 mx-auto">        
+        <hr/>
+        <h6>Filters</h6>                
+        <label for="agerange" class="form-label">Age</label>
+        <select class="form-select" aria-label="Select Age" id="agerange" name="agerange" style="margin-right: 2.5rem;">
+            <option value="0" >All ages</option>            
+            <option value="1" selected>18 - 25</option>
+            <option value="2">26 - 35</option>
+            <option value="3">36 - 45</option>
+            <option value="4">46 - 55</option>            
+            <option value="5">56 and more</option>            
+        </select>  
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="attrition" id="attrition_yes" value="Yes">
+            <label class="form-check-label" for="attrition_yes" style="padding-left: 0.5rem;">Has attrition &nbsp;&nbsp;</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="attrition" id="attrition_no" value="No">
+            <label class="form-check-label" for="attrition_no" style="padding-left: 0.5rem;">Without attrition</label>
+        </div>     
+        <div class="form-check form-check-inline" style="padding-left: 1.5rem;">
+            <input class="form-check-input" type="radio" name="attrition" id="attrition_reg" value="Reg" checked>
+            <label class="form-check-label" for="attrition_reg" style="padding-left: 0.5rem;">Regardless of attrition</label>
+        </div>      
+
+        <hr/>        
+    </div>        
+</div>
+<div class="row"> 
+    <div class="col-lg-8 col-md-10 mx-auto">        
+        <h3>Monthly Income Average by Gender </h3>        
+        <br>
+        <div id="pre-chart"><canvas id="bar-chart" width="800" height="450"></canvas></div>              
+        <br>        
+    </div>
+    <div class="col-lg-8 col-md-10 mx-auto">
+        <br>
+        <h3>Data Table</h3>        
+        <br>        
+        <div id="hratbl"></div>              
+    </div>
+</div>
+<div class="row">    
+    <div class="col-lg-8 col-md-10 mx-auto">
+        <br>
+        <h3>Upload file</h3>        
+        <br>        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="myfile">
+            <button type="submit">Upload</button>
+        </form>
+
+        {% if uploaded_file_url %}
+            <p>File uploaded at: <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+$(document).ready(function() {
+    // Shows the charts and datatable on page load
+    displayDataTable();   
+    displayTotalEmployees();
+    displayMonthlyIncomeAvg();
+    displayHourlyRateAvg();
+    displayAgeAvg();
+    displayChart();
+
+    $('#agerange').on('change', function() {
+        var age_range = $('#agerange').val();
+        var has_attrition = $('input[name="attrition"]:checked').val();
+
+        displayDataTable(age_range, has_attrition);    
+        displayTotalEmployees(age_range, has_attrition);
+        displayMonthlyIncomeAvg(age_range, has_attrition);
+        displayHourlyRateAvg(age_range, has_attrition);
+        displayAgeAvg(age_range, has_attrition);
+        displayChart(age_range, has_attrition);
+    });  
+
+    $('input[type=radio][name=attrition]').change(function() {
+        var age_range = $('#agerange').val();
+        var has_attrition = $('input[name="attrition"]:checked').val();
+
+        displayDataTable(age_range, has_attrition);    
+        displayTotalEmployees(age_range, has_attrition);
+        displayMonthlyIncomeAvg(age_range, has_attrition);
+        displayHourlyRateAvg(age_range, has_attrition);
+        displayAgeAvg(age_range, has_attrition);
+        displayChart(age_range, has_attrition);
+    });
+
+});
+
+function displayDataTable(agerange=0, has_attrition) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();
+
+    // Ajax call to API     
+    jQuery.get({                       
+      url: 'ajax/load_datatable_content',
+      data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+      },
+      success: function (data) {                                     
+          $('#hratbl').html(data);  
+          $('#tbl-data-content').DataTable({
+              responsive: true
+          });           
+      }    
+    }); 
+}
+
+function displayTotalEmployees(agerange=0) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();
+
+    // Ajax call to API     
+    jQuery.get({                       
+      url: 'ajax/load_total_employees',
+      data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+      },
+      success: function (data) {             
+          $('span#total_employees').html(data.total_employees);            
+      }    
+    }); 
+}
+
+function displayMonthlyIncomeAvg(agerange=0) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();    
+
+    // Ajax call to API     
+    $.ajax({
+        url:  'ajax/load_monthly_income_avg',
+        data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+        },
+        datatype: 'json',
+        type: 'GET',
+        contentType: 'application/json; charset=utf-8',            
+        success: function (data) {
+            var mia = data.monthly_income_avg;
+            $('span#monthly_income_avg').html("$"+mia.toFixed(2));                   
+        }
+    });      
+
+}
+
+function displayHourlyRateAvg(agerange=0) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();    
+
+    // Ajax call to API     
+    jQuery.get({                       
+      url: 'ajax/load_hourly_rate_avg',
+      data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+      },
+      success: function (data) {                       
+          var hra = data.hourly_rate_avg;
+          $('span#hourly_rate_avg').html("$"+hra.toFixed(2));            
+      }    
+    }); 
+}
+
+function displayAgeAvg(agerange=0) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();    
+
+    // Ajax call to API     
+    jQuery.get({                       
+      url: 'ajax/load_age_avg',
+      data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+      },
+      success: function (data) {                       
+          var aa = data.age_avg;
+          $('span#age_avg').html(aa.toFixed(1));            
+      }    
+    }); 
+}
+
+function displayChart(agerange=0) {    
+
+    var age_range = $('#agerange').val();
+    var has_attrition = $('input[name="attrition"]:checked').val();        
+
+    $("#bar-chart").remove();    
+    $("#pre-chart").append('<canvas id="bar-chart" width="800" height="450"></canvas>');
+
+    // Ajax call to API     
+    jQuery.get({                       
+      url: 'ajax/load_monthly_income_avg',
+      data: {
+          'age_range': age_range,
+          'has_attrition': has_attrition
+      },
+      success: function (data) {                                 
+            var male_monthly_income_avg = data.male_monthly_income_avg;
+            var female_monthly_income_avg = data.female_monthly_income_avg;            
+          
+            new Chart(document.getElementById("bar-chart"), {
+                type: 'bar',
+                data: {
+                    labels: ["Female", "Male"],
+                    datasets: [
+                        {
+                            label: "Avg. Income (Dlls)",
+                            backgroundColor: ["#8e5ea2","#3e95cd"],
+                            data: [male_monthly_income_avg.toFixed(2),female_monthly_income_avg.toFixed(2)]
+                        }
+                    ]
+                },
+                options: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Predicted world population (millions) in 2050'
+                    }
+                }
+            });
+      }    
+    });    
+
+}
+
+</script>
+{% endblock %}

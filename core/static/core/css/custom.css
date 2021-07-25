@@ -1,0 +1,23 @@
+@media only screen and (min-width: 768px) {
+    header.masthead .page-heading, header.masthead .post-heading, header.masthead .site-heading {
+        padding: 100px 0;
+    }
+}
+
+.card-header {
+    font-family: 'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+
+select, option {
+    font-family: 'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif !important;
+    font-size: 12px;
+}
+
+label.form-label {
+    font-size: 13px;
+    font-family: 'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+
+.navbar-brand {
+    font-size: 1rem;
+}
